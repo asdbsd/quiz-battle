@@ -14,7 +14,9 @@ Route::get('dashboard', function () {
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('quiz-battle', function () {
-    return Inertia::render('QuizDashboard');
+    return Inertia::render('QuizDashboard', [
+        'rooms' => auth()->user()->quizRooms()->with('players')->get(),
+    ]);
 })->middleware(['auth', 'verified'])->name('quiz-battle');
 
 Route::post('/quiz-battle', [QuizController::class, 'store'])
