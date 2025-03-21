@@ -21,7 +21,10 @@ class QuizController extends Controller
 
     public function show(QuizRoom $quizRoom)
     {
-        dd('jere');
+        if(!in_array(auth()->user()->id, $quizRoom->players()->pluck('id')->toArray())) {
+            $quizRoom->players()->attach(auth()->user()->id);
+        }
+
         return Inertia::render('QuizBattleRoom', ['quizRoom' => $quizRoom, 'players' => $quizRoom->players]);
     }
 }

@@ -7,7 +7,7 @@ import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import CreateQuiz from '../components/CreateQuiz.vue';
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
@@ -16,16 +16,12 @@ const breadcrumbs: BreadcrumbItem[] = [
     },
 ];
 
-const invoices = ref([
-    {
-      id: "INV001",
-      name: "Appolyzer",
-      playersInRoom: 3,
-      allowed: 4,
-      questionsCount: 15,
-      status: "Waiting for players",
-    }
-]);
+const { rooms, auth } = defineProps({ rooms: Array, auth: Object});
+
+onMounted(() => {
+    console.log(auth);
+})
+
 </script>
 
 <template>
@@ -63,16 +59,17 @@ const invoices = ref([
                     </thead>
                     <tbody class="[&_tr:last-child]:border-0">
                         <tr 
-                            v-for="invoice in invoices" 
-                            :key="invoice.id"
+                            v-for="room in rooms" 
+                            :key="room.id"
                             class="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted"
                         >
-                            <td class="p-4 align-middle font-medium">{{ invoice.name }}</td>
-                            <td class="p-4 align-middle">{{ invoice.playersInRoom }}</td>
-                            <td class="p-4 align-middle">{{ invoice.allowed }}</td>
-                            <td class="p-4 align-middle">{{ invoice.questionsCount }}</td>
-                            <td class="p-4 align-middle"> <Badge variant="destructive">{{ invoice.status }}</Badge></td>
+                            <td class="p-4 align-middle font-medium">{{ room.name }}</td>
+                            <td class="p-4 align-middle">{{ room.players.length }}</td>
+                            <td class="p-4 align-middle">{{ room.allowed_players_count }}</td>
+                            <td class="p-4 align-middle">{{ room.questions_count }}</td>
+                            <td class="p-4 align-middle"> <Badge variant="destructive">{{ room.status }}</Badge></td>
                             <td class="p-4 align-middle">
+                                <form :action="route('join-room', room.id)" method="GET"></form>
                                 <Button class="w-full bg-green-500 hover:bg-green-600">
                                     <!-- <LoaderCircle class="h-4 w-4 animate-spin" /> -->
                                     Join Room

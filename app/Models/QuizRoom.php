@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\QuizStatusCast;
 use Illuminate\Database\Eloquent\Model;
 
 class QuizRoom extends Model
@@ -11,6 +12,10 @@ class QuizRoom extends Model
         'allowed_players_count',
         'questions_count',
         'status'
+    ];
+
+    protected $casts = [
+        'status' => QuizStatusCast::class
     ];
 
     public function players()
