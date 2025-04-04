@@ -8,9 +8,26 @@ use App\Models\QuizRoom;
 use App\Models\Question;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-
+use Inertia\Response;
 class QuizController extends Controller
 {
+    public function index(): Response
+    {
+        $rooms = QuizRoom::with('players')
+        ->withCount('players')
+        ->where(function($q) {
+            $q->havingRaw('players_count < allowed_players_count')
+            ->orWhereHas('players', function($q) {
+                $q->where('user_id', auth()->user()->id);
+            });
+        })
+        ->get();
+        
+        return Inertia::render('QuizDashboard', [
+            'rooms' => $rooms
+        ]);
+    }
+
     public function store(QuizRequest $request)
     {
         $validated = $request->validated();

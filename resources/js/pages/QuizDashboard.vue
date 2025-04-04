@@ -19,7 +19,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const { rooms, auth } = defineProps({ rooms: Array, auth: Object});
 
 onMounted(() => {
-    console.log(auth);
+    console.log(rooms);
 })
 
 </script>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, defineProps, computed } from 'vue';
+import { ref, watch, computed } from 'vue';
 import { router } from '@inertiajs/vue3';
 
 interface Player {
