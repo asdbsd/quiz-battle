@@ -19,7 +19,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 const { rooms, auth } = defineProps({ rooms: Array, auth: Object});
 
 onMounted(() => {
-    console.log(auth);
+    console.log(rooms);
 })
 
 </script>
@@ -69,11 +69,13 @@ onMounted(() => {
                             <td class="p-4 align-middle">{{ room.questions_count }}</td>
                             <td class="p-4 align-middle"> <Badge variant="destructive">{{ room.status }}</Badge></td>
                             <td class="p-4 align-middle">
-                                <form :action="route('join-room', room.id)" method="GET"></form>
-                                <Button class="w-full bg-green-500 hover:bg-green-600">
-                                    <!-- <LoaderCircle class="h-4 w-4 animate-spin" /> -->
-                                    Join Room
-                                </Button>
+                                <form :action="route('quiz-battle.show', room.id)" method="GET">
+                                    <Button class="w-full bg-green-500 hover:bg-green-600">
+                                        <!-- <LoaderCircle class="h-4 w-4 animate-spin" /> -->
+                                        Join Room
+                                    </Button>
+                                </form>
+
                             </td>
                         </tr>
                     </tbody>
