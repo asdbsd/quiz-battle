@@ -3,6 +3,7 @@
 namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use App\Enums\QuizRoomStatuses;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -50,4 +51,14 @@ class User extends Authenticatable
     {
         return $this->belongsToMany(QuizRoom::class, 'quiz_room_user');
     }
+
+    public function canJoinRoom($roomId): bool
+    {
+        $room = QuizRoom::find($roomId);
+        $isInActiveRoom = QuizRoom::whereIn('status', [QuizRoomStatuses::WAITING_FOR_PLAYERS->value, QuizRoomStatuses::IN_PROGRESS->value])
+            ->whereHas('players', fn($q) => $q->where('user_id', $this->id))
+            ->exists();
+        return $room && ($room->players()->where('user_id', $this->id)->exists() || (!$room->isFull() && !$isInActiveRoom));
+    }
+    
 }

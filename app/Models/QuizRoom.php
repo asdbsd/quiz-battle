@@ -28,4 +28,9 @@ class QuizRoom extends Model
     {
         return $this->hasMany(Question::class);
     }
+
+    public function isFull(): bool
+    {
+        return $this->players()->count() === $this->allowed_players_count;
+    }
 }

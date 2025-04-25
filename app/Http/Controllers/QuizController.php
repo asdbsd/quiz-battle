@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Enums\QuizRoomStatuses;
+use App\Events\RoomActiveUsersWereUpdated;
 use App\Http\Requests\QuizRequest;
 use App\Models\QuizRoom;
 use App\Models\Question;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
 class QuizController extends Controller
@@ -42,21 +44,16 @@ class QuizController extends Controller
         ]);
     }
 
-    public function show(QuizRoom $quizRoom)
+    public function show(Request $request, QuizRoom $quizRoom)
     {
-        if(!in_array(auth()->user()->id, $quizRoom->players()->pluck('user_id')->toArray())) {
-            $quizRoom->players()->attach(auth()->user()->id);
-        }
+        Gate::authorize('show', $quizRoom);
 
-        $currentQuestion = null;
-        if ($quizRoom->status === QuizRoomStatuses::IN_PROGRESS->value) {
-            $currentQuestion = $quizRoom->questions()->orderBy('order')->first();
-        }
+        $quizRoom->players()->attach(auth()->user()->id);
+        
+        RoomActiveUsersWereUpdated::dispatch($quizRoom);
 
         return Inertia::render('QuizBattleRoom', [
-            'quizRoom' => $quizRoom,
-            'players' => $quizRoom->players,
-            'currentQuestion' => $currentQuestion
+            'quizRoom' => $quizRoom
         ]);
     }
 
@@ -70,7 +67,7 @@ class QuizController extends Controller
             return response()->json(['error' => 'Not enough players'], 400);
         }
 
-        // Generate questionsasf
+        // Generate questions
         $questions = [
             [
                 'question' => 'What is 2 + 2?',

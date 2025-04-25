@@ -1,16 +1,15 @@
-<script setup lang="ts">
+<script setup lang="js">
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/button/Button.vue';
 import Badge from "@/components/ui/badge/Badge.vue";
 import { LoaderCircle } from 'lucide-vue-next';
-import { type BreadcrumbItem } from '@/types';
 import { Head } from '@inertiajs/vue3';
 import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import CreateQuiz from '../components/CreateQuiz.vue';
 import { ref, onMounted } from 'vue'
 
-const breadcrumbs: BreadcrumbItem[] = [
-    {
+const breadcrumbs = [
+    {   
         title: 'Quiz Battle',
         href: '/quiz-battle',
     },
