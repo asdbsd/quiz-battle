@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\QuizRoomRoles;
 use App\Enums\QuizRoomStatuses;
+use App\Enums\QuizRoomTeams;
 use App\Events\RoomActiveUsersWereUpdated;
 use App\Http\Requests\QuizRequest;
 use App\Models\QuizRoom;
@@ -24,9 +26,10 @@ class QuizController extends Controller
             });
         })
         ->get();
-        
+        dd($rooms->first()->available_teams);
         return Inertia::render('QuizDashboard', [
-            'rooms' => $rooms
+            'rooms' => $rooms,
+
         ]);
     }
 
@@ -34,8 +37,13 @@ class QuizController extends Controller
     {
         $validated = $request->validated();
         $validated['status'] = QuizRoomStatuses::WAITING_FOR_PLAYERS->value;
+
         $quizRoom = QuizRoom::create($validated);
-        $quizRoom->players()->attach(auth()->user()->id);
+        $quizRoom->players()->attach(auth()->user()->id,
+        [
+            'role' => QuizRoomRoles::HOST->value,
+            'team' => QuizRoomTeams::TEAM_ONE->value
+        ]);
 
         return Inertia::render('QuizBattleRoom', [
             'quizRoom' => $quizRoom,
@@ -48,7 +56,11 @@ class QuizController extends Controller
     {
         Gate::authorize('show', $quizRoom);
 
-        $quizRoom->players()->attach(auth()->user()->id);
+        $quizRoom->players()->attach(auth()->user()->id, 
+        [
+            'role' => QuizRoomRoles::PARTICIPANT->value,
+            'team' => $quizRoom->allowed_players_count
+        ]);
         
         RoomActiveUsersWereUpdated::dispatch($quizRoom);
 
@@ -117,5 +129,12 @@ class QuizController extends Controller
             'points' => $isCorrect ? $question->points : 0,
             'nextQuestion' => $nextQuestion
         ]);
+    }
+
+    protected function isTeamFull($quizRoom, $team)
+    {
+        return $quizRoom->players()
+            ->where('team', $team)
+            ->count() >= $quizRoom->allowed_players_count / 2;
     }
 }

@@ -58,27 +58,27 @@ function updateOpponent() {
             <div
               v-for="(player, index) in playersInRoom"
               :key="player.id"
-              class="flex items-center gap-3"
+              class="flex items-center gap-1"
             >
-              <span class="bg-blue-100 text-blue-800 font-medium px-3 py-2 rounded-full">{{ player.name }}</span>
+              <span class="text-blue-800 font-medium text-xl">{{ player.name }}</span>
               <button
                 @click="toggleReady(index)"
                 :disabled="player.id !== currentUserId"
                 :class="[
-                  'flex items-center justify-center w-8 h-8 rounded-full border-2 transition-colors',
-                  player.is_ready ? 'bg-green-500 border-green-600' : 'bg-gray-300 border-gray-400',
+                  'flex items-center justify-center p-1 rounded border-2 transition-colors',
+                  player.is_ready ? 'bg-green-500' : 'bg-gray-100',
                   player.id !== currentUserId ? 'cursor-not-allowed opacity-60' : ''
                 ]"
                 :aria-pressed="player.is_ready"
                 :title="player.is_ready ? 'Ready' : 'Not Ready'"
                 type="button"
               >
-                <svg v-if="player.is_ready" xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
-                <svg v-else xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" />
-                </svg>
+                <div v-if="player.is_ready" class="inline">
+                  Ready
+                </div>
+                <div v-else class="inline">
+                  Not Ready
+                </div>
               </button>
             </div>
             <div v-if="playersInRoom.length < quizRoom.allowed_players_count" class="text-center">
