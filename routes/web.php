@@ -24,10 +24,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('quiz-battle/{quizRoom}', [QuizController::class, 'show'])
         ->name('quiz-battle.show');
 
+    Route::patch('quiz-battle/{quizRoom}/join-team', [QuizController::class, 'joinRoomTeam'])
+        ->name('quiz-battle.join-team');
+
     Route::post('quiz/{quizRoom}/start', [QuizController::class, 'startGame'])
         ->name('quiz.start');
     Route::post('quiz/{quizRoom}/questions/{question}/answer', [QuizController::class, 'submitAnswer'])
         ->name('quiz.answer');
+
+
 });
 
 require __DIR__.'/settings.php';

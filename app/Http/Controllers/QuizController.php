@@ -18,18 +18,14 @@ class QuizController extends Controller
     public function index(): Response
     {
         $rooms = QuizRoom::with('players')
-        ->withCount('players')
-        ->where(function($q) {
-            $q->havingRaw('players_count < allowed_players_count')
-            ->orWhereHas('players', function($q) {
-                $q->where('user_id', auth()->user()->id);
-            });
-        })
-        ->get();
-        dd($rooms->first()->available_teams);
+            ->withCount('players')
+            ->where(function ($q) {
+                $q->havingRaw('players_count < allowed_players_count');
+            })
+            ->get();
+
         return Inertia::render('QuizDashboard', [
             'rooms' => $rooms,
-
         ]);
     }
 
@@ -39,15 +35,21 @@ class QuizController extends Controller
         $validated['status'] = QuizRoomStatuses::WAITING_FOR_PLAYERS->value;
 
         $quizRoom = QuizRoom::create($validated);
-        $quizRoom->players()->attach(auth()->user()->id,
-        [
-            'role' => QuizRoomRoles::HOST->value,
-            'team' => QuizRoomTeams::TEAM_ONE->value
-        ]);
+        $quizRoom->players()->attach(
+            auth()->user()->id,
+            [
+                'role' => QuizRoomRoles::HOST->value,
+                'team' => QuizRoomTeams::TEAM_ONE->value
+            ]
+        );
 
         return Inertia::render('QuizBattleRoom', [
             'quizRoom' => $quizRoom,
             'players' => $quizRoom->players,
+            'roomTeams' => [
+                ['id' => QuizRoomTeams::TEAM_ONE->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_ONE->value)],
+                ['id' => QuizRoomTeams::TEAM_TWO->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_TWO->value)],
+            ],
             'currentQuestion' => null
         ]);
     }
@@ -56,17 +58,33 @@ class QuizController extends Controller
     {
         Gate::authorize('show', $quizRoom);
 
-        $quizRoom->players()->attach(auth()->user()->id, 
-        [
-            'role' => QuizRoomRoles::PARTICIPANT->value,
-            'team' => $quizRoom->allowed_players_count
-        ]);
-        
-        RoomActiveUsersWereUpdated::dispatch($quizRoom);
+        if (!$quizRoom->isPlayerInRoom(auth()->user())) {
+            $quizRoom->players()->attach(
+                auth()->user()->id,
+                [
+                    'role' => QuizRoomRoles::PARTICIPANT->value,
+                ]
+            );
+        }
 
+        RoomActiveUsersWereUpdated::dispatch($quizRoom);
+        // dd($quizRoom->players);
         return Inertia::render('QuizBattleRoom', [
-            'quizRoom' => $quizRoom
+            'quizRoom' => $quizRoom,
+            'players' => $quizRoom->players,
+            'roomTeams' => [
+                ['id' => QuizRoomTeams::TEAM_ONE->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_ONE->value)],
+                ['id' => QuizRoomTeams::TEAM_TWO->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_TWO->value)],
+            ]
         ]);
+    }
+
+    public function joinRoomTeam(Request $request, QuizRoom $quizRoom)
+    {
+        $team  = $request->team;
+        $quizRoom->players()->updateExistingPivot(auth()->user()->id, ['team' => $team]);
+
+        return to_route('quiz-battle.show', $quizRoom);
     }
 
     public function startGame(QuizRoom $quizRoom)

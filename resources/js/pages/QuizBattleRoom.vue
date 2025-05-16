@@ -7,13 +7,15 @@ import QuizInGame from '../components/QuizInGame.vue';
 let isGameOngoing = false;
 
 const props = defineProps({
-  quizRoom: Object
+  quizRoom: Object,
+  roomTeams: Array,
+  players: Array,
 });
 
 </script>
 <template>
   <div>
-    <QuizPreGame v-if="!isGameOngoing" :quizRoom="quizRoom" :playersInRoom="playersInRoom" />
+    <QuizPreGame v-if="!isGameOngoing" :quizRoom="quizRoom" :roomTeams="roomTeams" :players="players"/>
     <QuizInGame v-else />
   </div>
 </template>

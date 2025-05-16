@@ -21,12 +21,13 @@ class QuizRoom extends Model
     ];
 
     protected $appends = [
-        'available_teams'
+        'max_per_team'
     ];
 
     public function players()
     {
-        return $this->belongsToMany(User::class, 'quiz_room_user');
+        return $this->belongsToMany(User::class, 'quiz_room_user')
+            ->withPivot(['team', 'role']);
     }
 
     public function questions(): HasMany
@@ -39,16 +40,13 @@ class QuizRoom extends Model
         return $this->players()->count() === $this->allowed_players_count;
     }
 
-    public function getAvailableTeamsAttribute(): array
+    public function isPlayerInRoom(User $user): bool
     {
-        $teamsCount = 2;
-        $teams = [];
-        for ($i = 0; $i < $teamsCount; $i++) {
-            $team = QuizRoomTeams::from($i);
-            if ($this->players()->where('team', $team->value)->count() < $this->allowed_players_count / $teamsCount) {
-                $teams[] = $team;
-            }
-        }
-        return $teams;
+        return $this->players()->where('user_id', $user->id)->exists();
+    }
+
+    public function getMaxPerTeamAttribute(): int
+    {
+        return $this->allowed_players_count / 2;
     }
 }
