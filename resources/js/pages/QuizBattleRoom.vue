@@ -1,22 +1,27 @@
 <script setup lang="js">
-import { ref, watch, computed, onMounted } from 'vue';
-import { router, usePage } from '@inertiajs/vue3';
+import { computed } from 'vue';
+import AppLayout from '@/layouts/AppLayout.vue';
 import QuizPreGame from '../components/QuizPreGame.vue';
 import QuizInGame from '../components/QuizInGame.vue';
-
-let isGameOngoing = false;
 
 const props = defineProps({
   quizRoom: Object,
   roomTeams: Array,
   players: Array,
+  playerRoles: Array,
+  roomStatuses: Array
 });
+
+const isGameOngoing = computed(() => {
+  return props.quizRoom.status === 'In Progress';
+});
+
 
 </script>
 <template>
-  <div>
-    <QuizPreGame v-if="!isGameOngoing" :quizRoom="quizRoom" :roomTeams="roomTeams" :players="players"/>
-    <QuizInGame v-else />
-  </div>
+  <AppLayout>
+      <QuizPreGame ref="quizPreGame" v-if="!isGameOngoing" :quiz-room="quizRoom" :room-teams="roomTeams" :players="players" :player-roles="playerRoles" />
+      <QuizInGame v-else :quiz-room="quizRoom" :room-teams="roomTeams" :players="players" :player-roles="playerRoles" /> 
+  </AppLayout>
 </template>
   

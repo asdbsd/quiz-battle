@@ -68,15 +68,29 @@ class QuizController extends Controller
         }
 
         RoomActiveUsersWereUpdated::dispatch($quizRoom);
-        // dd($quizRoom->players);
+
         return Inertia::render('QuizBattleRoom', [
             'quizRoom' => $quizRoom,
             'players' => $quizRoom->players,
             'roomTeams' => [
                 ['id' => QuizRoomTeams::TEAM_ONE->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_ONE->value)],
                 ['id' => QuizRoomTeams::TEAM_TWO->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_TWO->value)],
+            ],
+            'playerRoles' => [
+                ['id' => QuizRoomRoles::HOST->value, 'name' => QuizRoomRoles::toName(QuizRoomRoles::HOST->value)],
+                ['id' => QuizRoomRoles::PARTICIPANT->value, 'name' => QuizRoomRoles::toName(QuizRoomRoles::PARTICIPANT->value)],
+            ],
+            'roomStatuses' => [
+                ['id' => QuizRoomStatuses::WAITING_FOR_PLAYERS->value, 'name' => QuizRoomStatuses::toName(QuizRoomStatuses::WAITING_FOR_PLAYERS->value)],
+                ['id' => QuizRoomStatuses::IN_PROGRESS->value, 'name' => QuizRoomStatuses::toName(QuizRoomStatuses::IN_PROGRESS->value)],
+                ['id' => QuizRoomStatuses::COMPLETED->value, 'name' => QuizRoomStatuses::toName(QuizRoomStatuses::COMPLETED->value)],
             ]
         ]);
+    }
+
+    public function update(Request $request, QuizRoom $quizRoom)
+    {
+        $quizRoom->players()->updateExistingPivot(auth()->user()->id, ['team' => $request->team, 'is_ready' => $request->is_ready, 'in_room' => $request->in_room]);
     }
 
     public function joinRoomTeam(Request $request, QuizRoom $quizRoom)
@@ -89,41 +103,42 @@ class QuizController extends Controller
 
     public function startGame(QuizRoom $quizRoom)
     {
-        if ($quizRoom->status !== QuizRoomStatuses::WAITING_FOR_PLAYERS->value) {
-            return response()->json(['error' => 'Game already started'], 400);
-        }
-
-        if ($quizRoom->players()->count() < 2) {
-            return response()->json(['error' => 'Not enough players'], 400);
-        }
-
-        // Generate questions
-        $questions = [
-            [
-                'question' => 'What is 2 + 2?',
-                'options' => ['3', '4', '5', '6'],
-                'correct_answer' => '4',
-                'order' => 1
-            ],
-            [
-                'question' => 'What is the capital of France?',
-                'options' => ['London', 'Berlin', 'Paris', 'Madrid'],
-                'correct_answer' => 'Paris',
-                'order' => 2
-            ],
-            // Add more questions as needed
-        ];
-
-        foreach ($questions as $question) {
-            $quizRoom->questions()->create($question);
-        }
-
         $quizRoom->update(['status' => QuizRoomStatuses::IN_PROGRESS->value]);
+        // if ($quizRoom->status !== QuizRoomStatuses::WAITING_FOR_PLAYERS->value) {
+        //     return response()->json(['error' => 'Game already started'], 400);
+        // }
 
-        return response()->json([
-            'message' => 'Game started',
-            'currentQuestion' => $quizRoom->questions()->orderBy('order')->first()
-        ]);
+        // if ($quizRoom->players()->count() < 2) {
+        //     return response()->json(['error' => 'Not enough players'], 400);
+        // }
+
+        // // Generate questions
+        // $questions = [
+        //     [
+        //         'question' => 'What is 2 + 2?',
+        //         'options' => ['3', '4', '5', '6'],
+        //         'correct_answer' => '4',
+        //         'order' => 1
+        //     ],
+        //     [
+        //         'question' => 'What is the capital of France?',
+        //         'options' => ['London', 'Berlin', 'Paris', 'Madrid'],
+        //         'correct_answer' => 'Paris',
+        //         'order' => 2
+        //     ],
+        //     // Add more questions as needed
+        // ];
+
+        // foreach ($questions as $question) {
+        //     $quizRoom->questions()->create($question);
+        // }
+
+        // $quizRoom->update(['status' => QuizRoomStatuses::IN_PROGRESS->value]);
+
+        // return response()->json([
+        //     'message' => 'Game started',
+        //     'currentQuestion' => $quizRoom->questions()->orderBy('order')->first()
+        // ]);
     }
 
     public function submitAnswer(Request $request, QuizRoom $quizRoom, Question $question)

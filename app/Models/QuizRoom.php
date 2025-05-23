@@ -27,7 +27,7 @@ class QuizRoom extends Model
     public function players()
     {
         return $this->belongsToMany(User::class, 'quiz_room_user')
-            ->withPivot(['team', 'role']);
+            ->withPivot(['team', 'role', 'is_ready', 'in_room']);
     }
 
     public function questions(): HasMany
