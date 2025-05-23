@@ -1,8 +1,8 @@
 <script setup lang="js">
-  import { ref, computed } from 'vue';
+  import { ref, computed, onUnmounted } from 'vue';
   
   import { usePage, useForm, router } from '@inertiajs/vue3';
-import { route } from 'ziggy-js';
+  import { route } from 'ziggy-js';
 
   const { user } = usePage().props.auth;
 
@@ -89,6 +89,10 @@ import { route } from 'ziggy-js';
     router.patch(route('quiz-battle.start', quizRoom.id));
     channel.whisper('GameStarted');
   }
+
+  onUnmounted(() => {
+    Echo.leave(`quizRooms.${quizRoom.id}`);
+  })
 
 </script>
 <template>
