@@ -6,10 +6,10 @@ import QuizInGame from '../components/QuizInGame.vue';
 
 const props = defineProps({
   quizRoom: Object,
-  roomTeams: Array,
-  players: Array,
-  playerRoles: Array,
-  roomStatuses: Array
+  // roomTeams: Array,
+  // players: Array,
+  // playerRoles: Array,
+  // roomStatuses: Array
 });
 
 const isGameOngoing = computed(() => {
@@ -20,8 +20,8 @@ const isGameOngoing = computed(() => {
 </script>
 <template>
   <AppLayout>
-      <QuizPreGame ref="quizPreGame" v-if="!isGameOngoing" :quiz-room="quizRoom" :room-teams="roomTeams" :players="players" :player-roles="playerRoles" />
-      <QuizInGame v-else :quiz-room="quizRoom" :room-teams="roomTeams" :players="players" :player-roles="playerRoles" /> 
+      <QuizPreGame ref="quizPreGame" v-if="!isGameOngoing" :quiz-room="props.quizRoom" />
+      <QuizInGame v-else :quiz-room="quizRoom"  /> 
   </AppLayout>
 </template>
   

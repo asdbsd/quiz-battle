@@ -58,33 +58,33 @@ class QuizController extends Controller
     {
         Gate::authorize('show', $quizRoom);
 
-        if (!$quizRoom->isPlayerInRoom(auth()->user())) {
-            $quizRoom->players()->attach(
-                auth()->user()->id,
-                [
-                    'role' => QuizRoomRoles::PARTICIPANT->value,
-                ]
-            );
-        }
+        // if (!$quizRoom->isPlayerInRoom(auth()->user())) {
+        //     $quizRoom->players()->attach(
+        //         auth()->user()->id,
+        //         [
+        //             'role' => QuizRoomRoles::PARTICIPANT->value,
+        //         ]
+        //     );
+        // }
 
-        RoomActiveUsersWereUpdated::dispatch($quizRoom);
+        event(new RoomActiveUsersWereUpdated($quizRoom, auth()->user()));
 
         return Inertia::render('QuizBattleRoom', [
-            'quizRoom' => $quizRoom,
-            'players' => $quizRoom->players,
-            'roomTeams' => [
-                ['id' => QuizRoomTeams::TEAM_ONE->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_ONE->value)],
-                ['id' => QuizRoomTeams::TEAM_TWO->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_TWO->value)],
-            ],
-            'playerRoles' => [
-                ['id' => QuizRoomRoles::HOST->value, 'name' => QuizRoomRoles::toName(QuizRoomRoles::HOST->value)],
-                ['id' => QuizRoomRoles::PARTICIPANT->value, 'name' => QuizRoomRoles::toName(QuizRoomRoles::PARTICIPANT->value)],
-            ],
-            'roomStatuses' => [
-                ['id' => QuizRoomStatuses::WAITING_FOR_PLAYERS->value, 'name' => QuizRoomStatuses::toName(QuizRoomStatuses::WAITING_FOR_PLAYERS->value)],
-                ['id' => QuizRoomStatuses::IN_PROGRESS->value, 'name' => QuizRoomStatuses::toName(QuizRoomStatuses::IN_PROGRESS->value)],
-                ['id' => QuizRoomStatuses::COMPLETED->value, 'name' => QuizRoomStatuses::toName(QuizRoomStatuses::COMPLETED->value)],
-            ]
+            'quizRoom' => $quizRoom->load('players'),
+            // 'players' => $quizRoom->players,
+            // 'roomTeams' => [
+            //     ['id' => QuizRoomTeams::TEAM_ONE->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_ONE->value)],
+            //     ['id' => QuizRoomTeams::TEAM_TWO->value, 'name' => QuizRoomTeams::toName(QuizRoomTeams::TEAM_TWO->value)],
+            // ],
+            // 'playerRoles' => [
+            //     ['id' => QuizRoomRoles::HOST->value, 'name' => QuizRoomRoles::toName(QuizRoomRoles::HOST->value)],
+            //     ['id' => QuizRoomRoles::PARTICIPANT->value, 'name' => QuizRoomRoles::toName(QuizRoomRoles::PARTICIPANT->value)],
+            // ],
+            // 'roomStatuses' => [
+            //     ['id' => QuizRoomStatuses::WAITING_FOR_PLAYERS->value, 'name' => QuizRoomStatuses::toName(QuizRoomStatuses::WAITING_FOR_PLAYERS->value)],
+            //     ['id' => QuizRoomStatuses::IN_PROGRESS->value, 'name' => QuizRoomStatuses::toName(QuizRoomStatuses::IN_PROGRESS->value)],
+            //     ['id' => QuizRoomStatuses::COMPLETED->value, 'name' => QuizRoomStatuses::toName(QuizRoomStatuses::COMPLETED->value)],
+            // ]
         ]);
     }
 

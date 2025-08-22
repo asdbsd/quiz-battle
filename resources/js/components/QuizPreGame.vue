@@ -1,181 +1,163 @@
 <script setup lang="js">
-  import { ref, computed, onUnmounted } from 'vue';
-  
-  import { usePage, useForm, router } from '@inertiajs/vue3';
-  import { route } from 'ziggy-js';
+import { computed, onUnmounted, ref } from 'vue';
+import { useEchoPresence } from "@laravel/echo-vue";
+import { usePage, useForm, router } from '@inertiajs/vue3';
+import { route } from 'ziggy-js';
 
-  const { user } = usePage().props.auth;
+const { user } = usePage().props.auth;
+const awaitingUsers = ref([]);
+const dropdownOpen = ref(false);
 
-  const { quizRoom, roomTeams, players, playerRoles } = defineProps({
-    quizRoom: Object,
-    roomTeams: Array,
-    players: Array,
-    playerRoles: Array
-  });
 
-  const updatePlayer = (playerData) => {
-    const player = players.find(p => p.id === user.id);
-    console.log(player, user.id);
-    router.patch(route('quiz-battle.update', quizRoom.id), {
-      'is_ready': playerData.isReady !== null ? playerData.inRoom : (player.pivot.is_ready ? true : false),
-      'team': playerData.team !== null ? playerData.team : player.pivot.team,
-      'in_room': playerData.inRoom !== null ? playerData.inRoom : (player.pivot.in_room ? true : false)
-    });
+const { quizRoom } = defineProps({
+  quizRoom: Object,
+  // roomTeams: Array,
+  // players: Array,
+  // playerRoles: Array
+});
 
-    updateOpponent();
+useEchoPresence(
+  `quizRooms.${quizRoom.id}`,
+  'RoomActiveUsersWereUpdated',
+  (event) => {
+    // If player has not joined a team in the room add it to the list of awaiting players
+    const isPlayerInRoom = quizRoom.players.find(player => player.id === event.user.id);
+    if (isPlayerInRoom) return;
+
+    awaitingUsers.value.push(event.user);
   }
+);
 
-  const canGameStart = computed(() => {
-    return players.length >= quizRoom.allowed_players_count && players.every(p => p.is_ready);
-  });
-  
-  const channel = Echo.join(`quizRooms.${quizRoom.id}`)
-    .here((e) => {
-      updatePlayer({ isReady: null, team: null, inRoom: true });
-      // router.reload({ only: [ 'players' ] });
-    })
-    .joining((e) => {
-      updatePlayer({ isReady: null, team: null, inRoom: true });
-      // router.reload({ only: [ 'players' ] });
-    })
-    .leaving((e) => {
-      console.log('here');
-      updatePlayer({ isReady: null, team: null, inRoom: false });
-      router.reload({ only: [ 'players' ] });
-    })
-  const unjoinedPlayers = computed(() => {
-    return players.filter(p => p.pivot.team == null && p.pivot.in_room == true);
-  })
-
-  const playerIsHost = computed(() => {
-    if(!playerRoles) {
-      return false;
-    }
-
-    const hostRoleId = playerRoles.find(r => r.name === 'Host').id;
-    const player = players.find(p => p.id === user.id);
-
-    return player.pivot.role === hostRoleId;
-  });
-
-  function updateOpponent() {
-    channel.whisper('PlayerChangedStatus');
-    channel.whisper('PlayerJoinedTeam');
-  }
-  
-  function playerCanJoinTeam($team) {
-    const isPlayerInTeam = players.find(p => p.id === user.id).pivot.team !== null;
-    const isTeamFull = players.filter(p => p.pivot.team === $team).length >= quizRoom.max_per_team;
-
-    return !isPlayerInTeam && !isTeamFull;
-  }
-
-  function joinTeam($team) {
-    router.patch(route('quiz-battle.join-team', quizRoom.id),
-      {
-        onSuccess: () => {
-          players.find(p => p.id === user.id).pivot.team = $team;
-
-        }
-      });
-  }
-
-  function getPlayersInTeam($team) {
-    return players.filter(p => p.pivot.team === $team);
-  }
+  const toggleReady = (player) => {
+    player.is_ready = !player.is_ready;
+  };
 
 
-  function startGame() {
-    router.patch(route('quiz-battle.start', quizRoom.id));
-    channel.whisper('GameStarted');
-  }
-
-  onUnmounted(() => {
-    Echo.leave(`quizRooms.${quizRoom.id}`);
-  })
-
+// mounted(() => {
+//   console.log('Component mounted.');
+//   console.log('User: ' + user);
+//   console.log('Room: ' + players);
+//   console.log('PlayerRoles:')
+// })
 </script>
 <template>
-    <div class="shadow-lg rounded-lg p-6 mb-6 m-4">
-      <!-- Room Name -->
-      <h1 class="text-2xl font-bold mb-8 w-full text-center">{{ quizRoom.name }}</h1>
-      <!-- Two-column layout for all other content -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-        <!-- Players Section -->
-        <div
-          v-for="team in roomTeams"
-          :key="team.id"
-          class="border-2 border-gray-200 rounded-lg"
-        >
-          <h2
-            class="text-xl font-semibold text-center bg-gray-100 dark:bg-slate-800 dark:text-white p-4 border-b border-gray-800 shadow dark:text-gray-900"
-          >
-            {{ team.name }}
-            <div>
-              <form @submit.prevent="updatePlayer({ isReady: null, team: team.id, inRoom: null })" v-if="playerCanJoinTeam(team.id)">
-                <button v-if="playerCanJoinTeam(team.id)" class="bg-blue-500 text-white mt-2 py-1 rounded-lg w-[50%]" type="submit" >Join Team</button>
-              </form>
-            </div>
-          </h2>
+<div class="flex flex-col space-y-6 p-6 bg-gray-50">
+  <!-- Awaiting Players -->
+  <section class="space-y-4">
+    <h2 class="text-xl font-semibold text-gray-900">Awaiting Players</h2>
 
-          <div class="flex flex-col gap-2">
+    <div class="bg-yellow-50 p-4 rounded-2xl border border-yellow-200 shadow-sm">
+      <ul class="flex flex-wrap gap-3">
+        <li
+          v-for="awaitingUser in awaitingUsers"
+          :key="awaitingUser.id"
+          class="flex items-center space-x-2 bg-white border border-gray-200 rounded-full px-4 py-2 shadow-sm hover:shadow-md transition relative"
+        >
+          <!-- Avatar + Name -->
+          <div class="flex items-center space-x-2">
             <div
-              v-for="(player, index) in getPlayersInTeam(team.id)"
-              :key="player.id"
-              class="flex items-center gap-1 p-4"
+              class="h-8 w-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-white text-sm font-semibold"
             >
-                <span class="text-blue-800 dark:text-yellow-400 font-medium text-xl col-span-1">
-                {{ player.name }}
-                </span>
-                <button
-                  @click="updatePlayer({ isReady: null, team: team.id, inRoom: null })"
-                  :disabled="player.id !== user.id"
-                  :class="[
-                    'flexjustify-center p-1 rounded border-2 transition-colors col-span-1',
-                    player.is_ready ? 'bg-green-500' : 'bg-gray-100 dark:bg-gray-800 shadow',
-                    player.id !== user.id
-                      ? 'cursor-not-allowed opacity-60 text-gray-900 dark:text-white'
-                      : '',
-                  ]"
-                  :aria-pressed="player.is_ready"
-                  :title="player.is_ready ? 'Ready' : 'Not Ready'"
-                  type="button"
-                >
-                  <div v-if="player.is_ready" class="inline">Ready</div>
-                  <div v-else class="inline">Not Ready</div>
-                </button>
+              {{ awaitingUser.name[0] }}
+            </div>
+            <span class="text-gray-800 text-sm font-medium">{{ awaitingUser.name }}</span>
+          </div>
 
+          <!-- Menu -->
+          <div class="relative">
+            <button
+              @click="dropdownOpen = dropdownOpen === awaitingUser.id ? null : awaitingUser.id"
+              class="p-1 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800 transition"
+            >
+              <svg class="h-4 w-4" viewBox="0 0 20 20" fill="currentColor">
+                <circle cx="10" cy="4" r="1" />
+                <circle cx="10" cy="10" r="1" />
+                <circle cx="10" cy="16" r="1" />
+              </svg>
+            </button>
+
+            <!-- Dropdown -->
+            <div
+              v-show="dropdownOpen === awaitingUser.id"
+              class="absolute right-0 mt-2 w-32 rounded-lg shadow-lg border border-gray-100 bg-white z-10"
+            >
+              <ul class="py-1">
+                <li>
+                  <a
+                    href="#"
+                    @click.prevent="kickPlayer(awaitingUser)"
+                    class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 hover:text-red-600 transition"
+                  >
+                    Kick
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
-        </div>
-      </div>
+        </li>
+      </ul>
+    </div>
+  </section>
 
-      <div class="my-2">
-        <div
-          v-if="unjoinedPlayers.length"
-          class="relative bg-blue-100 p-4 border-t border-gray-200 text-center rounded-xl"
+  <!-- Teams -->
+  <section class="flex flex-col md:flex-row gap-6">
+    <!-- Team A -->
+    <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+      <h3 class="text-lg font-semibold mb-3 text-gray-900">Team A</h3>
+      <ul class="divide-y divide-gray-200">
+        <li
+          v-for="player in quizRoom.players.filter((player) => player.pivot.team === 0)"
+          :key="player.id"
+          class="flex items-center justify-between py-3"
         >
-          <div
-            v-for="(player, index) in unjoinedPlayers"
-            :key="player.id"
-            class="flex items-center gap-1 p-4"
-          >
-            <span v-if="user.id !== player.id" class="text-blue-800 font-medium text-xl col-span-1">{{
-              player.name
-            }} : </span>
-            <span v-else class="text-blue-800 font-medium text-xl col-span-1">You : </span>
-            <div class="inline  dark:text-gray-900">Selecting Team</div>
+          <div class="flex items-center space-x-3">
+            <!-- Avatar placeholder -->
+            <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
+              {{ player.name[0] }}
+            </div>
+            <span class="text-gray-800 font-medium">{{ player.name }}</span>
           </div>
-        </div>
-      </div>
-
-      <button
-        :disabled="!playerIsHost || !canGameStart"
-        class="bg-blue-500 text-white px-6 py-2 rounded-lg w-full disabled:opacity-50 disabled:cursor-not-allowed mt-2"
-        @click="startGame()"
-      >
-        Start Game
-      </button>
+          <button
+            @click="toggleReady(player)"
+            :class="player.is_ready
+              ? 'bg-green-500 hover:bg-green-600 text-white'
+              : 'bg-red-500 hover:bg-red-600 text-white'"
+            class="font-bold py-1 px-4 rounded-full transition"
+          >
+            {{ player.is_ready ? "Ready" : "Not Ready" }}
+          </button>
+        </li>
+      </ul>
     </div>
 
+    <!-- Team B -->
+    <div class="flex-1 bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+      <h3 class="text-lg font-semibold mb-3 text-gray-900">Team B</h3>
+      <ul class="divide-y divide-gray-200">
+        <li
+          v-for="player in quizRoom.players.filter((player) => player.pivot.team === 1)"
+          :key="player.id"
+          class="flex items-center justify-between py-3"
+        >
+          <div class="flex items-center space-x-3">
+            <!-- Avatar placeholder -->
+            <div class="h-8 w-8 rounded-full bg-gray-200 flex items-center justify-center text-gray-600 font-semibold">
+              {{ player.name[0] }}
+            </div>
+            <span class="text-gray-800 font-medium">{{ player.name }}</span>
+          </div>
+          <button
+            @click="toggleReady(player)"
+            :class="player.is_ready
+              ? 'bg-green-500 hover:bg-green-600 text-white'
+              : 'bg-red-500 hover:bg-red-600 text-white'"
+            class="font-bold py-1 px-4 rounded-full transition"
+          >
+            {{ player.is_ready ? "Ready" : "Not Ready" }}
+          </button>
+        </li>
+      </ul>
+    </div>
+  </section>
+</div>
 </template>

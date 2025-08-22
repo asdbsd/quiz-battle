@@ -20,10 +20,10 @@ class QuizRoomChannel
      */
     public function join(User $user, string $quizRoom): array|bool
     {
-        $room = QuizRoom::find($quizRoom);
         if($user->canJoinRoom($quizRoom)) {
-            return ['player' => $room->players()->where('user_id', $user->id)->first()];
+            return true;
         }
+
         return false;
     }
 }
