@@ -49,7 +49,8 @@ class User extends Authenticatable
 
     public function quizRooms()
     {
-        return $this->belongsToMany(QuizRoom::class, 'quiz_room_user');
+        return $this->belongsToMany(QuizRoom::class, 'quiz_room_user')
+            ->withPivot('team', 'role');
     }
 
     public function canJoinRoom($roomId): bool

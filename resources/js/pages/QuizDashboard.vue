@@ -2,11 +2,8 @@
 import AppLayout from '@/layouts/AppLayout.vue';
 import Button from '@/components/ui/button/Button.vue';
 import Badge from "@/components/ui/badge/Badge.vue";
-import { LoaderCircle } from 'lucide-vue-next';
 import { Head } from '@inertiajs/vue3';
-import PlaceholderPattern from '../components/PlaceholderPattern.vue';
 import CreateQuiz from '../components/CreateQuiz.vue';
-import { ref, onMounted } from 'vue'
 
 const breadcrumbs = [
     {   
@@ -17,9 +14,6 @@ const breadcrumbs = [
 
 const { rooms, auth } = defineProps({ rooms: Array, auth: Object});
 
-onMounted(() => {
-    console.log(rooms);
-})
 
 </script>
 
@@ -74,7 +68,6 @@ onMounted(() => {
                                         Join Room
                                     </Button>
                                 </form>
-
                             </td>
                         </tr>
                     </tbody>

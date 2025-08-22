@@ -20,14 +20,21 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/quiz-battle', [QuizController::class, 'store'])
         ->middleware([HandlePrecognitiveRequests::class])
         ->name('quiz-battle.store');
+
+    Route::patch('/quiz-battle/{quizRoom}', [QuizController::class, 'update'])
+        ->middleware([HandlePrecognitiveRequests::class])
+        ->name('quiz-battle.update');
         
     Route::get('quiz-battle/{quizRoom}', [QuizController::class, 'show'])
         ->name('quiz-battle.show');
 
-    Route::post('quiz/{quizRoom}/start', [QuizController::class, 'startGame'])
-        ->name('quiz.start');
+    Route::patch('quiz-battle/{quizRoom}/start', [QuizController::class, 'startGame'])
+        ->name('quiz-battle.start');
+
     Route::post('quiz/{quizRoom}/questions/{question}/answer', [QuizController::class, 'submitAnswer'])
         ->name('quiz.answer');
+
+
 });
 
 require __DIR__.'/settings.php';

@@ -21,8 +21,9 @@ class QuizRoomChannel
     public function join(User $user, string $quizRoom): array|bool
     {
         if($user->canJoinRoom($quizRoom)) {
-            return ['user' => $user];
+            return true;
         }
+
         return false;
     }
 }

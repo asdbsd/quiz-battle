@@ -16,7 +16,9 @@ return new class extends Migration
             $table->foreignId('quiz_room_id')->constrained('quiz_rooms')->casecadeOnDelete();
             $table->foreignId('user_id')->constrained('users')->casecadeOnDelete();
             $table->integer('role')->default(1); // participant, host
-            $table->integer('team')->default(0);
+            $table->boolean('is_ready')->default(false);
+            $table->boolean('in_room')->default(false);
+            $table->integer('team')->nullable();
 
             $table->timestamps();
         });
